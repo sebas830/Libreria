@@ -1,6 +1,9 @@
 package com.example.libreria.service;
 
 import com.example.libreria.dto.LoanDTO;
+import com.example.libreria.exception.BookNotFoundException;
+import com.example.libreria.exception.LoanNotFoundException;
+import com.example.libreria.exception.UserNotFoundException;
 import com.example.libreria.model.Book;
 import com.example.libreria.model.Loan;
 import com.example.libreria.model.User;
@@ -11,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +29,7 @@ public class LoanService {
         this.userRepository = userRepository;
     }
 
+    // Convertir entidad a DTO
     private LoanDTO convertToDTO(Loan loan) {
         return new LoanDTO(
                 loan.getId(),
@@ -37,6 +40,7 @@ public class LoanService {
         );
     }
 
+    // Listar todos los préstamos
     public List<LoanDTO> getAllLoans() {
         return loanRepository.findAll()
                 .stream()
@@ -44,19 +48,23 @@ public class LoanService {
                 .collect(Collectors.toList());
     }
 
+    // Crear préstamo
     public LoanDTO createLoan(Long bookId, Long userId) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new NoSuchElementException("Libro no encontrado"));
+                .orElseThrow(() -> new BookNotFoundException("Libro no encontrado"));
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado"));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado"));
 
         if (!book.isAvailable()) {
             throw new IllegalStateException("El libro no está disponible");
         }
 
+        // Marcar libro como prestado
         book.setAvailable(false);
         bookRepository.save(book);
 
+        // Crear el préstamo
         Loan loan = new Loan();
         loan.setBook(book);
         loan.setUser(user);
@@ -65,9 +73,10 @@ public class LoanService {
         return convertToDTO(loanRepository.save(loan));
     }
 
+    // Devolver préstamo
     public LoanDTO returnLoan(Long id) {
         Loan loan = loanRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Préstamo no encontrado"));
+                .orElseThrow(() -> new LoanNotFoundException("Préstamo no encontrado"));
 
         Book book = loan.getBook();
         book.setAvailable(true);
@@ -77,12 +86,14 @@ public class LoanService {
         return convertToDTO(loanRepository.save(loan));
     }
 
+    // Eliminar préstamo
     public void deleteLoan(Long id) {
         if (!loanRepository.existsById(id)) {
-            throw new NoSuchElementException("Préstamo no encontrado");
+            throw new LoanNotFoundException("Préstamo no encontrado");
         }
         loanRepository.deleteById(id);
     }
 }
+
 
 

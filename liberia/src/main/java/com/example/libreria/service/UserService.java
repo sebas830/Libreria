@@ -2,6 +2,7 @@ package com.example.libreria.service;
 
 import com.example.libreria.dto.UserCreateDTO;
 import com.example.libreria.dto.UserDTO;
+import com.example.libreria.exception.UserNotFoundException;
 import com.example.libreria.model.User;
 import com.example.libreria.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class UserService {
 
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
         return convertToDTO(user);
     }
 
@@ -44,10 +45,10 @@ public class UserService {
         return convertToDTO(userRepository.save(user));
     }
 
-    // 🔹 Nuevo método: actualizar usuario
+    // 🔹 Actualizar usuario
     public UserDTO updateUser(Long id, UserCreateDTO userCreateDTO) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
 
         user.setUsername(userCreateDTO.getUsername());
         user.setPassword(userCreateDTO.getPassword()); // 🔒 después puedes encriptar
@@ -57,6 +58,9 @@ public class UserService {
     }
 
     public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException("No se puede eliminar. Usuario no encontrado con ID: " + id);
+        }
         userRepository.deleteById(id);
     }
 }
