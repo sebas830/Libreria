@@ -31,7 +31,15 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll() // registro y login públicos
+                        // Rutas públicas (solo durante pruebas)
+                        .requestMatchers(
+                                "/auth/**",
+                                "/api/users/**",
+                                "/api/books/**",
+                                "/api/loans/**"
+                        ).permitAll()
+
+                        // Todo lo demás requiere autenticación JWT
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
