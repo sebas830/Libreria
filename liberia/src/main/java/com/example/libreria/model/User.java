@@ -7,12 +7,21 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users") // evitar conflicto con palabra reservada
+@Builder
+@Table(name = "users") // Evita conflicto con palabra reservada en SQL
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String username;
-    private String password;
-    private String role; // ROLE_USER, ROLE_LIBRARIAN
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String username; // nombre de usuario (login)
+
+    @Column(nullable = false)
+    private String password; // almacenada con BCrypt
+
+    @Enumerated(EnumType.STRING) // Guarda el enum como texto: ROLE_USER o ROLE_LIBRARIAN
+    @Column(nullable = false)
+    private Role role;
 }

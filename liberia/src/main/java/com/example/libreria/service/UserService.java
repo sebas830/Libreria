@@ -3,6 +3,7 @@ package com.example.libreria.service;
 import com.example.libreria.dto.UserCreateDTO;
 import com.example.libreria.dto.UserDTO;
 import com.example.libreria.exception.UserNotFoundException;
+import com.example.libreria.model.Role;
 import com.example.libreria.model.User;
 import com.example.libreria.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -19,9 +20,13 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    // Convertir entidad a DTO
+    // 🔹 Convertir entidad → DTO
     private UserDTO convertToDTO(User user) {
-        return new UserDTO(user.getId(), user.getUsername(), user.getRole());
+        return new UserDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getRole().name() // Enum → String
+        );
     }
 
     public List<UserDTO> getAllUsers() {
@@ -37,22 +42,26 @@ public class UserService {
         return convertToDTO(user);
     }
 
+    // 🔹 Crear usuario
     public UserDTO createUser(UserCreateDTO userCreateDTO) {
         User user = new User();
         user.setUsername(userCreateDTO.getUsername());
-        user.setPassword(userCreateDTO.getPassword()); // 🔒 después puedes encriptar
-        user.setRole(userCreateDTO.getRole());
+        user.setPassword(userCreateDTO.getPassword());
+
+        // String → Enum (convierte "ROLE_USER" o "role_user" en Role.ROLE_USER)
+        user.setRole(Role.valueOf(userCreateDTO.getRole().toUpperCase()));
+
         return convertToDTO(userRepository.save(user));
     }
 
-    // 🔹 Actualizar usuario
+    // Actualizar usuario
     public UserDTO updateUser(Long id, UserCreateDTO userCreateDTO) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
 
         user.setUsername(userCreateDTO.getUsername());
-        user.setPassword(userCreateDTO.getPassword()); // 🔒 después puedes encriptar
-        user.setRole(userCreateDTO.getRole());
+        user.setPassword(userCreateDTO.getPassword());
+        user.setRole(Role.valueOf(userCreateDTO.getRole().toUpperCase()));
 
         return convertToDTO(userRepository.save(user));
     }
@@ -64,3 +73,4 @@ public class UserService {
         userRepository.deleteById(id);
     }
 }
+
